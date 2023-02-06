@@ -1,14 +1,11 @@
-const express = require('express');
-const app = express();
-const path = require('path');
-
-app.use(express.static(path.join(__dirname, 'public')));
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-});
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Mochi</title>
+  </head>
+  <body>
+    <h1>Hello, I am mochi</h1>
+    <img src="https://cdn.discordapp.com/avatars/1009149789914546287/0cd2b66b990760c1a3d7cd976569e672.webp?size=4096" alt="Mochi">
+  </body>
+</html>
+<!-- Path: src/public/index.html -->
