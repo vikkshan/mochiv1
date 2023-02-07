@@ -6,4 +6,4 @@ let ticketSchema = new Schema({
     Ticket: String,
 });
 
-module.exports = model("tickSchema", ticketSchema);
+module.exports = model("ticketSchema", ticketSchema);
