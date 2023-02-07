@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, Permissions, MessageManager, Embed, Collection } = require(`discord.js`);
+const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, Permissions, MessageManager, Embed, Collection, Events, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ChannelType, ButtonStyle } = require(`discord.js`);
 const fs = require('fs');
 const express = require('express');
 const app = express();
@@ -50,3 +50,129 @@ const commandFolders = fs.readdirSync("./src/commands");
     // Login to the Discord API using the token from the environment variable
     await client.login(process.env.token);
 })();
+
+const ticketSchema = require("./schema/ticketSchema.js")
+client.on(Events.InteractionCreate, async interaction => {
+
+    if (interaction.isButton()) return;
+    if (interaction.isChatInputCommand()) return;
+
+    const modal = new ModalBuilder()
+    .setTitle("Provide us with some information")
+    .setDescription("Please provide us with some information so we can help you")
+    .setCustomId("ticket-modal")
+
+    const username = new TextInputBuilder()
+    .setCustomId("username")
+    .setPlaceholder("Please input your username")
+    .setMinLength(3)
+    .setMaxLength(16)
+    .setRequired(true)
+    .setStyle(TextInputStyle.Short)
+    .setLabel("Username")
+
+    const reason = new TextInputBuilder()
+    .setCustomId("reason")
+    .setPlaceholder("Please input the reason for your ticket")
+    .setMinLength(3)
+    .setRequired(true)
+    .setStyle(TextInputStyle.Short)
+    .setLabel("Reason")
+
+    const firstActionRow = new ActionRowBuilder().addComponents(username)
+    const secondActionRow = new ActionRowBuilder().addComponents(reason)
+
+    modal.addComponents(firstActionRow, secondActionRow);
+
+    let choices;
+    if (interaction.isSelectMenu()) {
+
+        choices = interaction.values;
+            
+        const result = choices.join('');
+
+        ticketSchema.findOne({ Guild: interaction.guild.id}, async (err, data) => {
+
+            const filter = {Guild: interaction.guild.id};
+            const update = {Ticket: result};
+
+            ticketSchema.updateOne(filter, update, {
+                new: true
+            }).then(value => {
+                console.log(value)
+            })
+
+        })
+
+    }
+
+    if (!interaction.isModalSubmit()) {
+        interaction.showModal(modal)
+    }
+
+})
+
+client.on(Events.InteractionCreate, async interaction => {
+
+    if (interaction.isModalSubmit()) {
+
+        if (interaction.customId == 'ticket-modal') {
+
+            ticketSchema.findOne({Guild: interaction.guild.id}, async (err, data) => {
+
+                const usernameInput = interaction.getTextInputValue('username');
+                const reasonInput = interaction.getTextInputValue('reason');
+
+                const postChannel = await interaction.guild.channels.cache.find(c => c.name === `ticket-${interaction.user.id}`);
+                if (postChannel) return; await interaction.reply({ content: `You already have a ticket open - ${postChannel}`, ephemeral: true });
+
+                const category = data.Channel;
+
+                const embed = new EmbedBuilder()
+                .setTitle(`Ticket for ${interaction.user.username}`)
+                .setDescription(`Welcome ${usernameInput} Please wait for staff to review the information you have provided`)
+                .setColor("RANDOM")
+                .addFields({name: "Reason", value: reasonInput, inline: false})
+                .addFields({name: `Type`, value: `${data.Ticket}`, inline: false})
+                .addFooter({text: `Ticket ID: ${interaction.user.id}`})
+
+                const button = new ActionRowBuilder()
+                .addComponents(
+                    new ButtonBuilder()
+                    .setLabel("Close Ticket")
+                    .setStyle(ButtonStyle.Danger)
+                    .setCustomId("close-ticket")
+                )
+
+                let channel = await interaction.guild.channels.create({
+                    name: `ticket-${interaction.user.id}`,
+                    type: ChannelType.GuildText,
+                    parent: `${category}`
+                })
+
+                let msg = await channel.send({ embeds: [embed], components: [button] });
+                await interaction.reply({ content: `Your ticket has been created - ${channel}`, ephemeral: true });
+
+                const collector = msg.createMessageComponentCollector()
+
+                collector.on('collect', async i => {
+                    ;(await channel).delete();
+
+
+                    const dmEmbed = new EmbedBuilder()
+                    .setTitle(`Your ticket has been closed`)
+                    .setDescription(`Thank you for using our support system, if you have any further questions please open a new ticket`)
+                    .setColor("RANDOM")
+                    .addFooter({text: `Ticket ID ${interaction.user.id}`})
+                    .setTimestamp()
+
+                    await interaction.member.send({ embeds: [dmEmbed] }).catch (err => {
+                        return;
+                    })
+
+                })
+
+            })
+        }
+    }
+})
