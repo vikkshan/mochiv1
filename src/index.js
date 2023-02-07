@@ -182,13 +182,22 @@ client.on("ready", () => {
     console.log(`Logged in as ${client.user.tag}!`);
     
     const activities = [
-        `with ${client.guilds.cache.size} servers!`,
+        `in ${client.guilds.cache.size} servers!`,
         `with ${client.users.cache.size} users!`,
-        `with ${client.channels.cache.size} channels!`
+        `in ${client.channels.cache.size} channels!`
     ];
-    setInterval(() => {
-        const status = activities[Math.floor(Math.random() * activities.length)];
-        client.user.setPresence({ activities: [{ name: `${status}`}]});
-    }, 10000);
+    const statuses = ["dnd", "idle"];
 
-    })
+    let statusIndex = 0;
+
+    setInterval(() => {
+        const activity = activities[Math.floor(Math.random() * activities.length)];
+        const status = statuses[statusIndex];
+        client.user.setPresence({
+            status: status,
+            activities: [{ name: `${activity}`}]
+        });
+
+        statusIndex = (statusIndex + 1) % statuses.length;
+    }, 10000);
+});
