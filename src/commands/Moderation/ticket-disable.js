@@ -1,4 +1,4 @@
-const { PermissionsBitField, EmbedBuilder, ActionRowBuilder, SelectMenuBuilder, SlashCommandBuilder, ChannelType} = require("discord.js")
+const { PermissionsBitField, SlashCommandBuilder } = require("discord.js")
 const ticketSchema = require("../../schema/ticketSchema.js")
 
 module.exports = {
@@ -7,7 +7,7 @@ module.exports = {
         .setDescription("Disable ticket system"),
         async execute(interaction) {
 
-            if (!interaction.member.permissions.has(PermissionsBitField.Fags.Administrator)) return await interaction.reply({content: "You do not have permission to use this command", ephemeral: true})
+            if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administarator)) return interaction.reply({content: "You do not have permission to use this command", ephemeral: true})
 
           ticketSchema.deleteMany({Guild: interaction.guild.id}, async (err, data) => {
                 if (!data) {
