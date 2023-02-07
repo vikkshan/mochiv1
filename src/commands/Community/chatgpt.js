@@ -11,7 +11,7 @@ const openai = new OpenAIApi(configuration);
 
 // Defining the retry limit and delay for the OpenAI request
 const RETRY_LIMIT = 5;
-const RETRY_DELAY = 1000;
+const WAIT_TIME = 1000;
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -56,7 +56,7 @@ module.exports = {
         if (e.response && e.response.status === 429) {
           // Retrying the request if rate limit is reached
           ++retries;
-          await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+          await new Promise(resolve => setTimeout(resolve, WAIT_TIME));
         } else {
           // Sending an error reply if the request failed with a different status code
           return await interaction.editReply({
