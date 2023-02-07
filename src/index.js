@@ -1,4 +1,4 @@
-const { Client, GatewayIntentBits, EmbedBuilder, PermissionsBitField, Permissions, MessageManager, Embed, Collection, Events, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ChannelType, ButtonStyle } = require(`discord.js`);
+const { Client, GatewayIntentBits, EmbedBuilder, Collection, Events, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, ChannelType, ButtonStyle } = require(`discord.js`);
 const fs = require('fs');
 const express = require('express');
 const app = express();
@@ -51,7 +51,8 @@ const commandFolders = fs.readdirSync("./src/commands");
     await client.login(process.env.token);
 })();
 
-const ticketSchema = require("./schema/ticketSchema.js")
+const ticketSchema = require("./schema/ticketSchema.js");
+const ready = require('./events/ready.js');
 client.on(Events.InteractionCreate, async interaction => {
 
     if (interaction.isButton()) return;
@@ -91,7 +92,7 @@ client.on(Events.InteractionCreate, async interaction => {
             
         const result = choices.join('');
 
-        ticketSchema.findOne({ Guild: interaction.guild.id}, async (err, data) => {
+        ticketSchema.findOne({ Guild: interaction.guild.id}, async () => {
 
             const filter = {Guild: interaction.guild.id};
             const update = {Ticket: result};
@@ -155,7 +156,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
                 const collector = msg.createMessageComponentCollector()
 
-                collector.on('collect', async i => {
+                collector.on('collect', async () => {
                     ;(await channel).delete();
 
 
@@ -166,7 +167,7 @@ client.on(Events.InteractionCreate, async interaction => {
                     .addFooter({text: `Ticket ID ${interaction.user.id}`})
                     .setTimestamp()
 
-                    await interaction.member.send({ embeds: [dmEmbed] }).catch (err => {
+                    await interaction.member.send({ embeds: [dmEmbed] }).catch (() => {
                         return;
                     })
 
@@ -176,3 +177,18 @@ client.on(Events.InteractionCreate, async interaction => {
         }
     }
 })
+
+client.on("ready", () => {
+    console.log(`Logged in as ${client.user.tag}!`);
+    
+    const activities = [
+        `with ${client.guilds.cache.size} servers!`,
+        `with ${client.users.cache.size} users!`,
+        `with ${client.channels.cache.size} channels!`
+    ];
+    setInterval(() => {
+        const status = activities[Math.floor(Math.random() * activities.length)];
+        client.user.setPresence({ activities: [{ name: `${status}`}]});
+    }, 10000);
+
+    })
