@@ -162,7 +162,7 @@ client.on(Events.InteractionCreate, async interaction => {
                     const dmEmbed = new EmbedBuilder()
                     .setTitle(`Your ticket has been closed`)
                     .setDescription(`Thank you for using our support system, if you have any further questions please open a new ticket`)
-                    .setColor("RANDOM")
+                    .setColor("Purple")
                     .addFooter({text: `Ticket ID ${interaction.user.id}`})
                     .setTimestamp()
 
